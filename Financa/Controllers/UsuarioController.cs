@@ -1,7 +1,9 @@
-﻿using Financa.Models;
+﻿using Financa.Data;
+using Financa.Models;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Financa.Controllers
 {
@@ -9,19 +11,37 @@ namespace Financa.Controllers
     [Route("[controller]")]
     public class UsuarioController : ControllerBase
     {
-        private static List<Usuario> usuarios = new List<Usuario>();
+        private AppDbContext _context;
 
-        [HttpPost]
-        public void AdicionaUsuario([FromBody]Usuario usuario)
+        public UsuarioController(AppDbContext context)
         {
-            usuarios.Add(usuario);
-            Console.WriteLine(usuario.Name);
+            _context = context;
+        }
+       
+        [HttpPost]
+        public IActionResult AdicionaUsuario([FromBody] Usuario usuario)
+        {
+           _context.Usuarios.Add(usuario);
+            _context.SaveChanges();
+            return CreatedAtAction(nameof(RecuperaUsuarioId), new { Id = usuario.Id }, usuario);
+            
         }
 
         [HttpGet]
-        public IEnumerable<Usuario> RecuperaUsuario()
+        public Enumerable<Usuario> RecuperaUsuario()
         {
-            return usuarios;
+            return _context.Usuarios;
+        }
+        [HttpGet("{id}")]
+        public IActionResult RecuperaUsuarioId(int id)
+        {
+           Usuario usuario = _context.Usuarios.FirstOrDefault(usuario => usuario.Id == id);
+
+            if(usuario != null)
+            {
+                return Ok(usuario);
+            }
+            return NotFound();
         }
     }
 }
